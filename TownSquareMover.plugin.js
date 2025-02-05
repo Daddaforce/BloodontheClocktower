@@ -80,13 +80,13 @@ if (!global.ZeresPluginLibrary) {
     });
 }
 
-if (!require('fs').existsSync(require('path').join(BdApi.Plugins.folder, "NewMarkdown.md"))) {
-    BdApi.showConfirmationModal("Markdown Missing", `The Markdown file needed for ${config.name ?? config.info.name} is missing. Please click Download Now to aquire it.`, {
+if (!require('fs').existsSync(require('path').join(BdApi.Plugins.folder, "README.md"))) {
+    BdApi.showConfirmationModal("README Missing", `The README file needed for ${config.name ?? config.info.name} is missing. Please click Download Now to aquire it.`, {
         confirmText: "Download Now",
         cancelText: "Cancel",
         onConfirm: () => {
-            require("request").get("https://raw.githubusercontent.com/Daddaforce/BloodontheClocktower/refs/heads/main/MarkdownInfo.md", async (err, resp, body) => {
-                await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "NewMarkdown.md"), body, r));
+            require("request").get("https://raw.githubusercontent.com/Daddaforce/BloodontheClocktower/refs/heads/main/README.md", async (err, resp, body) => {
+                await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "README.md"), body, r));
             });
         }
     });
@@ -326,7 +326,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 label: `Send message`,
                 action: () => runOnce("addString", () => {
                     // this.sendMessagePost(props.channel.id, "TownSquareMover.md");
-                    this.sendMessagePost(props.channel.id, "NewMarkdown.md");
+                    this.sendMessagePost(props.channel.id, "README.md");
                     this.selectedUsers.clear();
                 })
             });
@@ -680,11 +680,11 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             return newRoomIds;
         }
 
-        async sendMessagePost(channelId, markdownFileName) {
+        async sendMessagePost(channelId, fileName) {
             const wait = this.getAPICallDelay();
             let attempts = 0;
             let content = ""
-            const filePath = path.join(__dirname, markdownFileName);
+            const filePath = path.join(__dirname, fileName);
             fs.readFile(filePath, 'utf-8', async (err, data) => {
                 if (err) {
                     console.error("Error reading Markdown file:", err);
