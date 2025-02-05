@@ -123,8 +123,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
     const fs = require('fs');
     const path = require('path');
 
-    const ServerName = "Discord Dungeons and Dragons"
-    // const ServerName = "Blood on the Clocktower"
+    const ServerName = "Blood on the Clocktower"
     const StorytellerRole = "Storyteller"
     const StorytellerRoleColor = 0x2bc410
     const ClockTowerChannelName = "Great Clocktower"

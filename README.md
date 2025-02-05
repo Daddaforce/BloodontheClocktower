@@ -27,7 +27,7 @@ A BetterDiscord plugin designed for the Storyteller of *Blood on the Clocktower*
 3. Enable it in the BetterDiscord settings.
 
 ## Usage
-1. Create a new server, right click on the General voice channel, select generate server, and the plugin will prompt to generate the server structure.
+1. Create a new server, make sure this is named 'Blood on the Clocktower', right click on the General voice channel, select generate server, and the plugin will prompt to generate the server structure.
 2. Use the provided context menu options to manage players efficiently during the game.
 3. Utilize the quick-move feature for streamlined player relocation.
 
