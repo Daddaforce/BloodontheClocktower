@@ -324,7 +324,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             const addString = BdApi.ContextMenu.buildItem({
                 label: `Send message`,
                 action: () => runOnce("addString", () => {
-                    // this.sendMessagePost(props.channel.id, "TownSquareMover.md");
                     this.sendMessagePost(props.channel.id, "README.md");
                     this.selectedUsers.clear();
                 })
@@ -446,6 +445,22 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             // Generate all required channels
             await this.createRooms({guild: guild, roomInfo: InformationTextChannelNames})
             await this.createRooms({guild: guild, roomInfo: VoiceChannelNames})
+
+            // Post README
+            await this.addPluginInformation(guild);
+        }
+
+        async addPluginInformation(guild) {
+            const guildChannels = Object.values(mutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
+            pluginInformationChannelId = undefined;
+            guildChannels.forEach((channel, _) => {
+                if (channel.name === PluginInformationChannel && channel.type === 0) {
+                    pluginInformationChannelId = channel.id;
+                }
+            })
+            if (pluginInformationChannelId !== undefined) {
+                await this.sendMessagePost(channel.id, "README.md")
+            }
         }
 
         async muteTownsfolk(guild) {
