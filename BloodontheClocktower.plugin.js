@@ -176,7 +176,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         async onStart() {
-            this.triggerREADME();
             this.cancelled = false;
             PluginUtilities.addStyle(config.info.name, this.css);
             this.PatchAll();
@@ -501,7 +500,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         async muteTownsfolk(guild) {
-            const wait = this.getAPICallDelay();
             let userIdsToMute = [];
             const voices = this.getVoices(guild);
             if (voices.length === 0) return;
