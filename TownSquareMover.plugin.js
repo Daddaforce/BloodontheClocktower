@@ -123,6 +123,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
     const fs = require('fs');
     const path = require('path');
 
+    // const ServerName = "Discord Dungeons and Dragons"
     const ServerName = "Blood on the Clocktower"
     const StorytellerRole = "Storyteller"
     const StorytellerRoleColor = 0x2bc410
@@ -321,10 +322,10 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 setTimeout(() => this.actionCooldown.delete(key), 500); // 500ms cooldown
             };
 
-            const addString = BdApi.ContextMenu.buildItem({
-                label: `Send message`,
-                action: () => runOnce("addString", () => {
-                    this.sendMessagePost(props.channel.id, "README.md");
+            const postReadMe = BdApi.ContextMenu.buildItem({
+                label: `Post README`,
+                action: () => runOnce("postReadMe", () => {
+                    this.addPluginInformation(props.guild, "README.md");
                     this.selectedUsers.clear();
                 })
             });
@@ -389,7 +390,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             let storytellerRoleExists = this.checkForStoryTeller(props.guild)
             let canGenerateServer = this.checkToGenerateServer(props.guild) && this.canManageGuild(props.channel.id);
             if (props.channel.type === 0) {
-                separatorAdded = this.addContextItem(retVal, addString, false);
+                separatorAdded = this.addContextItem(retVal, postReadMe, false);
             }
             if (canGenerateServer) {
                 separatorAdded = this.addContextItem(retVal, regenerateServerChannels, separatorAdded);
@@ -447,19 +448,43 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             await this.createRooms({guild: guild, roomInfo: VoiceChannelNames})
 
             // Post README
-            await this.addPluginInformation(guild);
+            await this.addPluginInformation(guild, "README.md");
         }
 
-        async addPluginInformation(guild) {
+        async addPluginInformation(guild, fileName) {
+            const wait = this.getAPICallDelay()
             const guildChannels = Object.values(mutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
-            pluginInformationChannelId = undefined;
+            let pluginInformationChannelId = undefined;
             guildChannels.forEach((channel, _) => {
                 if (channel.name === PluginInformationChannel && channel.type === 0) {
                     pluginInformationChannelId = channel.id;
                 }
             })
             if (pluginInformationChannelId !== undefined) {
-                await this.sendMessagePost(channel.id, "README.md")
+                let messageContent = ""
+                const filePath = path.join(__dirname, fileName);
+                fs.readFile(filePath, 'utf-8', async (err, data) => {
+                    if (err) {
+                        console.error("Error reading Markdown file:", err);
+                        return;
+                    }
+                    messageContent = data;
+                })
+                const headerRegex = /^(#{1,6})\s*(.*?)\n([\s\S]*?)(?=\n#{1,6}|\n*$)/gm;
+                let match;
+                let headerIndexes = []
+                while ((match = headerRegex.exec(messageContent)) !== null) {
+                    headerIndexes.push(match.index);
+                }
+                for (let i = 0; i < headerIndexes.length; i++) {
+                    let message = ""
+                    if (headerIndexes.length - 1 === i) {
+                        message = messageContent.slice(headerIndexes[i]).trim()
+                    } else {
+                        message = messageContent.slice(headerIndexes[i], headerIndexes[i+1]).trim()
+                    }
+                    await this.sendMessagePost(pluginInformationChannelId, message)
+                }
             }
         }
 
@@ -694,18 +719,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             return newRoomIds;
         }
 
-        async sendMessagePost(channelId, fileName) {
+        async sendMessagePost(channelId, content) {
             const wait = this.getAPICallDelay();
             let attempts = 0;
-            let content = ""
-            const filePath = path.join(__dirname, fileName);
-            fs.readFile(filePath, 'utf-8', async (err, data) => {
-                if (err) {
-                    console.error("Error reading Markdown file:", err);
-                    return;
-                }
-                content = data;
-            })
             const messageData = {
                 content: content,
             }

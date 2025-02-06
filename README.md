@@ -1,4 +1,5 @@
-# Blood on the Clocktower Storyteller Plugin
+# Blood on the Clocktower Plugin
+[Blood on the Clocktower Wiki](https://wiki.bloodontheclocktower.com/Main_Page)
 
 ## Description
 A BetterDiscord plugin designed for the Storyteller of *Blood on the Clocktower*. It automates server setup and provides tools to manage players efficiently during the game.
