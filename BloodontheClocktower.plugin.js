@@ -176,6 +176,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         async onStart() {
+            this.triggerREADME();
             this.cancelled = false;
             PluginUtilities.addStyle(config.info.name, this.css);
             this.PatchAll();
@@ -447,7 +448,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 channelIds.push(channel.id)
             })
             for (let i = 0; i < channelIds.length; i++) {
-                await UpdateChannelActions.deleteChannel(channelIds[i])
+                await UpdateChannelActions.deleteChannel(channelIds[i]);
                 await this.sleep(wait);
             }
 
@@ -455,12 +456,13 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             await this.createGuildStorytellerRole(guild);
 
             // Generate all required channels
-            await this.createRooms({guild: guild, roomInfo: InformationTextChannelNames})
-            await this.createRooms({guild: guild, roomInfo: VoiceChannelNames})
+            await this.createRooms({guild: guild, roomInfo: InformationTextChannelNames});
 
             // Post README
-            Toasts.info(`Updating ${PluginInformationChannel} channel with the README.`)
+            Toasts.info(`Updating ${PluginInformationChannel} channel with the README.`);
             await this.addPluginInformation(guild, "README.md");
+
+            await this.createRooms({guild: guild, roomInfo: VoiceChannelNames});
         }
 
         async addPluginInformation(guild, fileName) {
