@@ -79,18 +79,6 @@ if (!global.ZeresPluginLibrary) {
         }
     });
 }
-
-if (!require('fs').existsSync(require('path').join(BdApi.Plugins.folder, "README.md"))) {
-    BdApi.showConfirmationModal("README Missing", `The README file needed for ${config.name ?? config.info.name} is missing. Please click Download Now to aquire it.`, {
-        confirmText: "Download Now",
-        cancelText: "Cancel",
-        onConfirm: () => {
-            require("request").get("https://raw.githubusercontent.com/Daddaforce/BloodontheClocktower/refs/heads/main/README.md", async (err, resp, body) => {
-                await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "README.md"), body, r));
-            });
-        }
-    });
-}
  
 module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
     const plugin = (Plugin, Library) => {
@@ -102,28 +90,26 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         Patcher,
         Toasts
     } = Api;
-    const voiceStatesStore = WebpackModules.getByProps("getVoiceStates");
-    const voiceUserSelector = BdApi.findModuleByProps("voiceUser").voiceUser;
-    const voiceUsersRender = WebpackModules.getByPrototypes("renderPrioritySpeaker");
-    const guildChannelStore = WebpackModules.getByProps("getVocalChannelIds");
-    const setMemberChannel = BdApi.findModuleByProps("setChannel");
-    const createChannelActions = BdApi.Webpack.getModule(m => m.createChannel);
-    const updateChannelActions = BdApi.Webpack.getModule(m => m.updateChannel);
-    const updatePermissionOverwriteActions = BdApi.Webpack.getModule(m => m.updatePermissionOverwrite);
-    const guildUserStore = BdApi.Webpack.getModule(m => m.getMembers);
-    const guildRolesStore = BdApi.Webpack.getModule(m => m.getRoles);
-    const guildRoleActions = BdApi.Webpack.getModule(m => m.createRole);
-    const mutableChannelsForGuild = BdApi.Webpack.getModule(m => m.getMutableGuildChannelsForGuild)
-    const createMessageActions = BdApi.Webpack.getModule(m => m.sendMessage)
-    const userStore = BdApi.Webpack.getModule(m => m.getCurrentUser);
-    const channelPermissionStore = BdApi.Webpack.getModule(m => m.getChannelPermissions);
-    const guildCategories = BdApi.Webpack.getModule(m => m.getCategories)
-    const guildCategory = BdApi.Webpack.getModule(m => m.getCategory)
+    const VoiceStatesStore = WebpackModules.getByProps("getVoiceStates");
+    const VoiceUserSelector = BdApi.findModuleByProps("voiceUser").voiceUser;
+    const VoiceUsersRender = WebpackModules.getByPrototypes("renderPrioritySpeaker");
+    const GuildChannelStore = WebpackModules.getByProps("getVocalChannelIds");
+    const SetMemberChannel = BdApi.findModuleByProps("setChannel");
+    const CreateChannelActions = BdApi.Webpack.getModule(m => m.createChannel);
+    const UpdateChannelActions = BdApi.Webpack.getModule(m => m.updateChannel);
+    const UpdatePermissionOverwriteActions = BdApi.Webpack.getModule(m => m.updatePermissionOverwrite);
+    const GuildUserStore = BdApi.Webpack.getModule(m => m.getMembers);
+    const GuildRolesStore = BdApi.Webpack.getModule(m => m.getRoles);
+    const GuildRoleActions = BdApi.Webpack.getModule(m => m.createRole);
+    const MutableChannelsForGuild = BdApi.Webpack.getModule(m => m.getMutableGuildChannelsForGuild)
+    const CreateMessageActions = BdApi.Webpack.getModule(m => m.sendMessage);
+    const UserStore = BdApi.Webpack.getModule(m => m.getCurrentUser);
+    const ChannelPermissionStore = BdApi.Webpack.getModule(m => m.getChannelPermissions);
+    const GuildCategories = BdApi.Webpack.getModule(m => m.getCategories);
 
     const fs = require('fs');
     const path = require('path');
 
-    // const ServerName = "Discord Dungeons and Dragons"
     const ServerName = "Blood on the Clocktower"
     const StorytellerRole = "Storyteller"
     const StorytellerRoleColor = 0x2bc410
@@ -144,8 +130,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
     const InformationTextChannelNames = new RoomInfo(
         {
             name: "Information", type: 4, children: [
-                new RoomInfo({name: "town-square", type: 0}),
                 new RoomInfo({name: PluginInformationChannel, type: 0}),
+                new RoomInfo({name: "town-square", type: 0}),
             ]
         }
     )
@@ -189,7 +175,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             return panel.getElement();
         }
 
-        onStart() {
+        async onStart() {
+            await this.triggerREADME();
             this.cancelled = false;
             PluginUtilities.addStyle(config.info.name, this.css);
             this.PatchAll();
@@ -205,7 +192,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
         async PatchAll() {
             this.contextMenuPatches.push(BdApi.ContextMenu.patch("channel-context", this.channelMenuPatch.bind(this)));
-            Patcher.after(voiceUsersRender.prototype, "render", this.voiceUserRenderPatch.bind(this));
+            Patcher.after(VoiceUsersRender.prototype, "render", this.voiceUserRenderPatch.bind(this));
             this.contextMenuPatches.push(this.addDocumentListenerEvent("mousedown", this.onMouseDown.bind(this)));
             this.contextMenuPatches.push(this.addDocumentListenerEvent("mousemove", this.onMouseMove.bind(this)));
             this.contextMenuPatches.push(this.addDocumentListenerEvent("mouseup", this.onMouseUp.bind(this)));
@@ -271,7 +258,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 let right = Math.max(e.x, this.mouseStart.x);
                 let bottom = Math.max(e.y, this.mouseStart.y);
 
-                let voiceElements = document.querySelectorAll("." + voiceUserSelector);
+                let voiceElements = document.querySelectorAll("." + VoiceUserSelector);
 
                 for (const element of voiceElements) {
                     let rect = element.getBoundingClientRect();
@@ -288,23 +275,29 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             }
         }
 
+        async triggerREADME() {
+            if (!require('fs').existsSync(require('path').join(BdApi.Plugins.folder, "README.md"))) {
+                BdApi.showConfirmationModal("README Missing", `The README file needed for ${config.name ?? config.info.name} is missing. Please click Download Now to aquire it.`, {
+                    confirmText: "Download Now",
+                    cancelText: "Cancel",
+                    onConfirm: () => {
+                        require("request").get("https://raw.githubusercontent.com/Daddaforce/BloodontheClocktower/refs/heads/main/README.md", async (err, resp, body) => {
+                            await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "README.md"), body, r));
+                        });
+                    }
+                });
+            }
+            return require('fs').existsSync(require('path').join(BdApi.Plugins.folder, "README.md"))
+        }
+
         channelMenuPatch(retVal, props) {
 
-            // if (props.channel.type !== 2) return;
+            if (props.channel.type !== 2) return;
 
             if (props.guild.id !=  this.guild_id) {
                 this.guild_id = props.guild.id;
                 this.selectedUsers.clear();
             }
-
-            // const currentUser = userStore.getCurrentUser()
-            // console.log(currentUser)
-             
-            // console.log(this.canManageChannels(props.channel.id))
-            // console.log(this.canManageGuild(props.channel.id))
-
-            // const guildUsers = guildUserStore.getMembers(props.guild.id)
-            // console.log(guildUsers)
 
             if (!this.canMoveInChannel(props.channel.id) || props.guild.name !== ServerName) {
                 return;
@@ -429,14 +422,14 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             console.log("Regenerating server!")
 
             // Delete all current channels
-            const guildChannels = Object.values(mutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
+            const guildChannels = Object.values(MutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
             let channelIds = []
             const wait = this.getAPICallDelay();
             guildChannels.forEach((channel, _) => {
                 channelIds.push(channel.id)
             })
             for (let i = 0; i < channelIds.length; i++) {
-                await updateChannelActions.deleteChannel(channelIds[i])
+                await UpdateChannelActions.deleteChannel(channelIds[i])
                 await this.sleep(wait);
             }
 
@@ -448,12 +441,15 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             await this.createRooms({guild: guild, roomInfo: VoiceChannelNames})
 
             // Post README
-            await this.addPluginInformation(guild, "README.md");
+            const readMeExistsawait = await this.triggerREADME();
+            if (readMeExistsawait) {
+                await this.addPluginInformation(guild, "README.md");
+            }
         }
 
         async addPluginInformation(guild, fileName) {
             const wait = this.getAPICallDelay()
-            const guildChannels = Object.values(mutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
+            const guildChannels = Object.values(MutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
             let pluginInformationChannelId = undefined;
             guildChannels.forEach((channel, _) => {
                 if (channel.name === PluginInformationChannel && channel.type === 0) {
@@ -522,7 +518,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         checkToGenerateServer(guild) {
-            const guildChannels = Object.values(mutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
+            const guildChannels = Object.values(MutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
             let generalVoiceExists = false;
             let generalTextExists = false;
             guildChannels.forEach((channel, _) => {
@@ -538,7 +534,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         checkForStoryTeller(guild) {
-            const guildRoles = Object.values(guildRolesStore.getRoles(guild.id));
+            const guildRoles = Object.values(GuildRolesStore.getRoles(guild.id));
             let storytellerRoleExists = false
             guildRoles.forEach((role, _) => {
                 if (role.name === StorytellerRole && role.color === StorytellerRoleColor) {
@@ -583,7 +579,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             };
 
             Toasts.info(`Creating Storyteller Role`);
-            const newStorytellerRole = await guildRoleActions.createRole(
+            const newStorytellerRole = await GuildRoleActions.createRole(
                 roleData.guildId,
                 roleData.name,
                 roleData.color
@@ -591,7 +587,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 Toasts.error("Failed to create Storyteller role:", err);
             });
             await this.sleep(wait);
-            await guildRoleActions.updateRolePermissions(
+            await GuildRoleActions.updateRolePermissions(
                 roleData.guildId,
                 newStorytellerRole.id,
                 roleData.permissions,
@@ -601,7 +597,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             this.storytellerRoleId = newStorytellerRole.id
 
             // Find and assign storyteller role to existing bedrooms and clocktower
-            const guildChannels = Object.values(guildChannelStore.getVocalChannelIds(guild.id));
+            const guildChannels = Object.values(GuildChannelStore.getVocalChannelIds(guild.id));
             let privateChannels = []
             guildChannels.forEach((channelId, _) => {
                 let channel = DiscordModules.ChannelStore.getChannel(channelId);
@@ -628,7 +624,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 };
                 // Update the channel with the new overwrites
                 try {
-                    await updatePermissionOverwriteActions.updatePermissionOverwrite(privateChannels[i].id, overwrite);
+                    await UpdatePermissionOverwriteActions.updatePermissionOverwrite(privateChannels[i].id, overwrite);
                     await this.sleep(wait);
                 } catch (err) {
                     Toasts.error("Failed to update channels with Storyteller role:", err);
@@ -727,7 +723,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             }
             while (attempts < this.maxRetries) {
                 try {
-                    await createMessageActions.sendMessage(channelId, messageData);
+                    await CreateMessageActions.sendMessage(channelId, messageData);
                     await this.sleep(wait);
                     break;
                 } catch (error) {
@@ -748,7 +744,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             let attempts = 0;
             while (attempts < this.maxRetries) {
                 try {
-                    await guildRoleActions.setServerMute(guildId, userId, muted);
+                    await GuildRoleActions.setServerMute(guildId, userId, muted);
                     await this.sleep(wait);
                     break;
                 } catch (error) {
@@ -769,7 +765,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             let attempts = 0;
             while (attempts < this.maxRetries) {
                 try {
-                    await setMemberChannel.setChannel(guildId, userId, roomId);
+                    await SetMemberChannel.setChannel(guildId, userId, roomId);
                     await this.sleep(wait);
                     break;
                 } catch (error) {
@@ -791,7 +787,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             let attempts = 0;
             while (attempts < this.maxRetries) {
                 try {
-                    const newChannel = await createChannelActions.createChannel(newRoom);
+                    const newChannel = await CreateChannelActions.createChannel(newRoom);
                     newChannelId = newChannel.body.id
                     await this.sleep(wait);
                     break;
@@ -833,7 +829,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             }
             let storytellerUsers = []
             let users = []
-            const guildUsers = Object.values(guildUserStore.getMembers(guild.id))
+            const guildUsers = Object.values(GuildUserStore.getMembers(guild.id))
             guildUsers.forEach((user, _) => {
                 unknownUserIds.forEach((unknownUserId, _) => {
                     if (unknownUserId === user.userId) {
@@ -855,7 +851,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             let bedrooms = [];
             let clocktowerId = undefined;
             let voiceChannelCategoryId = undefined;
-            const guildChannels = Object.values(mutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
+            const guildChannels = Object.values(MutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
             guildChannels.forEach((channel, _) => {
                 if (channel.name === BedroomName && channel.type === 2) {
                     bedrooms.push(channel);
@@ -872,7 +868,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             }
 
             let voicesInRooms = [];
-            const voiceStates = Object.values(voiceStatesStore.getVoiceStates(guild.id))
+            const voiceStates = Object.values(VoiceStatesStore.getVoiceStates(guild.id))
             voiceStates.forEach((voiceState, _) => {
                 voiceState.forEach((voice, _) => {
                     voicesInRooms.push(voice);
@@ -935,7 +931,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             const voices = this.getVoices(guild)
             if (voices.length === 0) return;
             let townSquare = undefined
-            const guildChannels = Object.values(guildChannelStore.getVocalChannelIds(guild.id));
+            const guildChannels = Object.values(GuildChannelStore.getVocalChannelIds(guild.id));
             guildChannels.forEach((channelId, _) => {
                 let channel = DiscordModules.ChannelStore.getChannel(channelId);
                 if (channel.name === TownSquareChannelName) {
@@ -963,7 +959,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
         getVoices(guild, channel=undefined) {
             let voices = []
-            const voiceStates = Object.values(voiceStatesStore.getVoiceStates(guild.id))
+            const voiceStates = Object.values(VoiceStatesStore.getVoiceStates(guild.id))
             voiceStates.forEach((voiceState, _) => {
                 voiceState.forEach((voice, _) => {
                     if (channel !== undefined && voice.voiceState.channelId === channel?.id) {
@@ -984,7 +980,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             voices.forEach((voice, _) => { users.push(voice.user)})
 
             let clockTower = undefined
-            const guildChannels = Object.values(guildChannelStore.getVocalChannelIds(guild.id));
+            const guildChannels = Object.values(GuildChannelStore.getVocalChannelIds(guild.id));
             guildChannels.forEach((channelId, _) => {
                 let channel = DiscordModules.ChannelStore.getChannel(channelId);
                 if (channel.name === ClockTowerChannelName) {
@@ -1017,7 +1013,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
                     let current = e.target;
                     while (current != undefined && current.classList) {
-                        if (current.classList.contains(voiceUserSelector)) {
+                        if (current.classList.contains(VoiceUserSelector)) {
                             current.classList.toggle('selectedVoiceUser', this.selectedUsers.has(org.props.user.id))
                             break;
                         }

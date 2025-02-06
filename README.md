@@ -1,5 +1,5 @@
 # Blood on the Clocktower Plugin
-[Blood on the Clocktower Wiki](https://wiki.bloodontheclocktower.com/Main_Page)
+### [Blood on the Clocktower Wiki](https://wiki.bloodontheclocktower.com/Main_Page)
 
 ## Description
 A BetterDiscord plugin designed for the Storyteller of *Blood on the Clocktower*. It automates server setup and provides tools to manage players efficiently during the game.
@@ -12,9 +12,9 @@ A BetterDiscord plugin designed for the Storyteller of *Blood on the Clocktower*
   - **Great Clocktower** (hidden channel for Storytellers)
   - **Bedrooms** (private voice channels for night phases)
 - Adds contextual menu options:
+  - **Move Everyone to Town Square** (gathers all users back in the main discussion area)
   - **Move Everyone to Bedrooms** (sends players to individual hidden voice channels for the night phase, this also dynamically generates new bedrooms if there aren't enough)
   - **Move to Great Clocktower** (for night interactions, only available on Bedroom channels)
-  - **Move all to Town Square** (gathers all users back in the main discussion area)
   - **Mute/Unmute Townsfolk** (server mutes/unmutes all except Storytellers, only available on the Town Square channel)
 - Creates a **Storyteller** role with permissions to manage channels, move users, and access hidden areas.
 - Automatically moves Storytellers to the Great Clocktower during the night phase.
@@ -44,3 +44,5 @@ No Known bugs currently. Please report any bugs to Daddaforce
 
 ## License
 This project is licensed under the MIT License.
+
+## Built using [ZeresPluginLibrary](https://betterdiscord.app/plugin/ZeresPluginLibrary)
