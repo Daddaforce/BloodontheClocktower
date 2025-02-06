@@ -1,6 +1,6 @@
 /**
- * @name TownSquareMover
- * @description Allows you to CTRL/Shift click users. To move selected users in mass to another voice channel by right clicking the destination channel and at the bottom selected the "Move X here"
+ * @name BloodontheClocktower
+ * @description A BetterDiscord plugin designed for the Storyteller of *Blood on the Clocktower*. It automates server setup and provides tools to manage players efficiently during the game.
  * @version 1.0.0
  * @author Daddaforce
  * @website https://github.com/Daddaforce
@@ -31,7 +31,7 @@
 const config = {
     main: "index.js",
     info: {
-        name: "TownSquareMover",
+        name: "BloodontheClocktower",
         authors: [
             {
                 name: "Daddaforce",
@@ -39,7 +39,7 @@ const config = {
             }
         ],
         version: "1.0.0",
-        description: "Allows you to CTRL/Shift click users in voice. To move selected users in mass to another voice channel by right clicking the destination channel and at the bottom selected the \"Move X here\"",
+        description: "A BetterDiscord plugin designed for the Storyteller of *Blood on the Clocktower*. It automates server setup and provides tools to manage players efficiently during the game.",
         github: "https://github.com/Daddaforce"
     },
     changelog: [],
@@ -151,7 +151,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
     )
 
-    class TownSquareMover extends Plugin {
+    class BloodontheClocktower extends Plugin {
         cancelled = false;
         guild_id = "";
         selectedUsers = new Set();
@@ -176,7 +176,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         async onStart() {
-            await this.triggerREADME();
+            this.triggerREADME();
             this.cancelled = false;
             PluginUtilities.addStyle(config.info.name, this.css);
             this.PatchAll();
@@ -275,21 +275,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             }
         }
 
-        async triggerREADME() {
-            if (!require('fs').existsSync(require('path').join(BdApi.Plugins.folder, "README.md"))) {
-                BdApi.showConfirmationModal("README Missing", `The README file needed for ${config.name ?? config.info.name} is missing. Please click Download Now to aquire it.`, {
-                    confirmText: "Download Now",
-                    cancelText: "Cancel",
-                    onConfirm: () => {
-                        require("request").get("https://raw.githubusercontent.com/Daddaforce/BloodontheClocktower/refs/heads/main/README.md", async (err, resp, body) => {
-                            await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "README.md"), body, r));
-                        });
-                    }
-                });
-            }
-            return require('fs').existsSync(require('path').join(BdApi.Plugins.folder, "README.md"))
-        }
-
         channelMenuPatch(retVal, props) {
 
             if (props.channel.type !== 2) return;
@@ -319,6 +304,14 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 label: `Post README`,
                 action: () => runOnce("postReadMe", () => {
                     this.addPluginInformation(props.guild, "README.md");
+                    this.selectedUsers.clear();
+                })
+            });
+
+            const getREADME = BdApi.ContextMenu.buildItem({
+                label: `Download README File`,
+                action: () => runOnce("getREADME", () => {
+                    this.getREADMEFile();
                     this.selectedUsers.clear();
                 })
             });
@@ -380,12 +373,12 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             });
 
             let separatorAdded = false
-            let storytellerRoleExists = this.checkForStoryTeller(props.guild)
+            const storytellerRoleExists = this.checkForStoryTeller(props.guild)
+            const readMeExists = this.checkREADME()
             let canGenerateServer = this.checkToGenerateServer(props.guild) && this.canManageGuild(props.channel.id);
-            if (props.channel.type === 0) {
-                separatorAdded = this.addContextItem(retVal, postReadMe, false);
-            }
-            if (canGenerateServer) {
+            if (!readMeExists) {
+                separatorAdded = this.addContextItem(retVal, getREADME, separatorAdded);
+            } else if (canGenerateServer) {
                 separatorAdded = this.addContextItem(retVal, regenerateServerChannels, separatorAdded);
             } else if (!storytellerRoleExists) {
                 separatorAdded = this.addContextItem(retVal, createStorytellerRole, separatorAdded);
@@ -408,6 +401,32 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             return retVal;
         }
 
+        checkREADME() {
+            const readmePath = path.join(BdApi.Plugins.folder, "README.md");
+            if (fs.existsSync(readmePath)) return true;
+            return false;
+        }
+
+        async getREADMEFile() {
+            await this.triggerREADME();
+        }
+
+        async triggerREADME() {
+            const readmePath = path.join(BdApi.Plugins.folder, "README.md");
+
+            if (fs.existsSync(readmePath)) return true;
+
+            BdApi.showConfirmationModal("README Missing", `The README file needed for ${config.name ?? config.info.name} is missing. Please click Download Now to aquire it.`, {
+                confirmText: "Download Now",
+                cancelText: "Cancel",
+                onConfirm: () => {
+                    require("request").get("https://raw.githubusercontent.com/Daddaforce/BloodontheClocktower/refs/heads/main/README.md", async (err, resp, body) => {
+                        await new Promise(r => fs.writeFile(path.join(BdApi.Plugins.folder, "README.md"), body, r));
+                    });
+                }
+            });
+        }
+
         regenerateServerConfirm(guild) {
             BdApi.showConfirmationModal("Regenerate Server", `This server will be regenerated into a Blood on the Clocktower server.`, {
                 confirmText: "Let's go!",
@@ -419,7 +438,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         async regenerateServer(guild) {
-            console.log("Regenerating server!")
+            Toasts.info("Regenerating server!")
 
             // Delete all current channels
             const guildChannels = Object.values(MutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
@@ -441,14 +460,11 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             await this.createRooms({guild: guild, roomInfo: VoiceChannelNames})
 
             // Post README
-            const readMeExistsawait = await this.triggerREADME();
-            if (readMeExistsawait) {
-                await this.addPluginInformation(guild, "README.md");
-            }
+            Toasts.info(`Updating ${PluginInformationChannel} channel with the README.`)
+            await this.addPluginInformation(guild, "README.md");
         }
 
         async addPluginInformation(guild, fileName) {
-            const wait = this.getAPICallDelay()
             const guildChannels = Object.values(MutableChannelsForGuild.getMutableGuildChannelsForGuild(guild.id));
             let pluginInformationChannelId = undefined;
             guildChannels.forEach((channel, _) => {
@@ -461,7 +477,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 const filePath = path.join(__dirname, fileName);
                 fs.readFile(filePath, 'utf-8', async (err, data) => {
                     if (err) {
-                        console.error("Error reading Markdown file:", err);
+                        Toasts.error("Error reading Markdown file:", err);
                         return;
                     }
                     messageContent = data;
@@ -506,7 +522,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 await this.muteUsersPost(guild.id, userIdsToMute[i], !this.townsfolkMuted);
             }
             this.townsfolkMuted = !this.townsfolkMuted
-            Toasts.info("Muting complete");
+            // Toasts.info("Muting complete");
         }
 
         getAPICallDelay() {
@@ -578,7 +594,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 color: StorytellerRoleColor,
             };
 
-            Toasts.info(`Creating Storyteller Role`);
+            // Toasts.info(`Creating Storyteller Role`);
             const newStorytellerRole = await GuildRoleActions.createRole(
                 roleData.guildId,
                 roleData.name,
@@ -630,7 +646,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     Toasts.error("Failed to update channels with Storyteller role:", err);
                 }
             }
-            Toasts.info(`Successfully created Storyteller Role`);
+            // Toasts.info(`Successfully created Storyteller Role`);
         }
 
         generatePermissionOverwrites(guild) {
@@ -711,7 +727,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 const newRoomdId = await this.createChannelPost(newRoom)
                 newRoomIds.push(newRoomdId);
             }
-            Toasts.info(`Successfully created ${roomsToCreate} ${newRoom.name}`);
+            // Toasts.info(`Successfully created ${roomsToCreate} ${newRoom.name}`);
             return newRoomIds;
         }
 
@@ -729,7 +745,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 } catch (error) {
                     if (error.status === 429) {
                         const retryAfter = error.headers?.["retry-after"] || 1; // Default to 1s if not found
-                        console.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
+                        Toasts.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
                         await this.sleep(retryAfter * 1000); // Wait
                     } else {
                         console.log(error);
@@ -750,7 +766,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 } catch (error) {
                     if (error.status === 429) {
                         const retryAfter = error.headers?.["retry-after"] || 1; // Default to 1s if not found
-                        console.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
+                        Toasts.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
                         await this.sleep(retryAfter * 1000); // Wait
                     } else {
                         console.log(error);
@@ -771,7 +787,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 } catch (error) {
                     if (error.status === 429) {
                         const retryAfter = error.headers?.["retry-after"] || 1; // Default to 1s if not found
-                        console.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
+                        Toasts.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
                         await this.sleep(retryAfter * 1000); // Wait
                     } else {
                         console.log(error);
@@ -794,7 +810,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 } catch (error) {
                     if (error.status === 429) {
                         const retryAfter = error.headers?.["retry-after"] || 1; // Default to 1s if not found
-                        console.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
+                        Toasts.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
                         await this.sleep(retryAfter * 1000); // Wait
                     } else {
                         console.log(error);
@@ -909,14 +925,14 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     for (let i = 0; i < users.length; i++) {
                         await this.moveUsersPost(guild.id, users[i], availableBedroomIds[i]);
                     }
-                    Toasts.info("Moving to bedrooms complete!");
+                    // Toasts.info("Moving to bedrooms complete!");
                 }
                 if (storytellerUsers.length !== 0) {
                     Toasts.info('Moving ' + storytellerUsers.length + " users to Clocktower.");
                     for (let i = 0; i < storytellerUsers.length; i++) {
                         await this.moveUsersPost(guild.id, storytellerUsers[i], clocktowerId);
                     }
-                    Toasts.info("Moving to Clocktower complete!");
+                    // Toasts.info("Moving to Clocktower complete!");
                 }
                 if (users.length === 0 && storytellerUsers.length === 0) {
                     Toasts.info("Everyone has already been moved");
@@ -954,7 +970,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             for (let i = 0; i < users.length; i++) {
                 await this.moveUsersPost(guild.id, users[i].id, townSquare.id);
             }
-            Toasts.info("Moving to Town Square complete!");
+            // Toasts.info("Moving to Town Square complete!");
         }
 
         getVoices(guild, channel=undefined) {
@@ -993,7 +1009,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             for (let i = 0; i < users.length; i++) {
                 await this.moveUsersPost(guild.id, users[i].id, clockTower.id);
             }
-            Toasts.info("Moving to Clocktower complete!");
+            // Toasts.info("Moving to Clocktower complete!");
         }
 
         voiceUserRenderPatch(org, args, resp) {
@@ -1066,7 +1082,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
           }
           `
     }
-    return TownSquareMover;
+    return BloodontheClocktower;
 };
      return plugin(Plugin, Api);
 })(global.ZeresPluginLibrary.buildPlugin(config));

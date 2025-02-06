@@ -33,6 +33,7 @@ A BetterDiscord plugin designed for the Storyteller of *Blood on the Clocktower*
 3. Utilize the quick-move feature for streamlined player relocation.
 
 ## Configuration
+A single setting to change the delay between API calls is available, if you are being rate limited.
 No additional configuration required—everything is automated for easy use.
 
 ## Known Issues
