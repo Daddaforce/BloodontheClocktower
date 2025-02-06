@@ -112,7 +112,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
     const ServerName = "Blood on the Clocktower"
     const StorytellerRole = "Storyteller"
-    const StorytellerRoleColor = 0x2bc410
+    const StorytellerRoleColour = 0x2bc410
+    const SpectatorRole = "Spectator"
+    const SpectatorRoleColour = 0xffffff
     const ClockTowerChannelName = "Great Clocktower"
     const TownSquareChannelName = "Town Square"
     const BedroomName = "Bedroom"
@@ -159,6 +161,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         modifierAddMode = true;
         mouseStart = {x:0, y:0};
         storytellerRoleId = undefined;
+        spectatorRoleId = undefined;
         voiceChannelCategoryId = undefined;
         townsfolkMuted = false;
         maxRetries = 5;
@@ -324,10 +327,10 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 })
             });
 
-            const createStorytellerRole = BdApi.ContextMenu.buildItem({
-                label: "Create Storyteller Role",
-                action: () => runOnce("createStorytellerRole", () => {
-                    this.createGuildStorytellerRole(props.guild);
+            const createStorytellerAndSpectatorRole = BdApi.ContextMenu.buildItem({
+                label: "Create Storyteller and Spectator Roles",
+                action: () => runOnce("createStorytellerAndSpectatorRole", () => {
+                    this.createGuildRoles(props.guild);
                     this.selectedUsers.clear();
                 })
             });
@@ -373,7 +376,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             });
 
             let separatorAdded = false
-            const storytellerRoleExists = this.checkForStoryTeller(props.guild)
+            const storytellerRoleExists = this.checkForStoryTellerAndSpectator(props.guild)
             const readMeExists = this.checkREADME()
             let canGenerateServer = this.checkToGenerateServer(props.guild) && this.canManageGuild(props.channel.id);
             if (!readMeExists) {
@@ -381,7 +384,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             } else if (canGenerateServer) {
                 separatorAdded = this.addContextItem(retVal, regenerateServerChannels, separatorAdded);
             } else if (!storytellerRoleExists) {
-                separatorAdded = this.addContextItem(retVal, createStorytellerRole, separatorAdded);
+                separatorAdded = this.addContextItem(retVal, createStorytellerAndSpectatorRole, separatorAdded);
             } else {
                 if (props.channel.name === TownSquareChannelName) {
                     separatorAdded = this.addContextItem(retVal, muteUsers, false);
@@ -453,7 +456,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             }
 
             // Create Storyteller Role
-            await this.createGuildStorytellerRole(guild);
+            await this.createGuildRoles(guild);
 
             // Generate all required channels
             await this.createRooms({guild: guild, roomInfo: InformationTextChannelNames});
@@ -549,16 +552,20 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             return generalVoiceExists && generalTextExists;
         }
 
-        checkForStoryTeller(guild) {
+        checkForStoryTellerAndSpectator(guild) {
             const guildRoles = Object.values(GuildRolesStore.getRoles(guild.id));
-            let storytellerRoleExists = false
+            let storytellerRoleExists = false;
+            let spectatorRoleExists = false;
             guildRoles.forEach((role, _) => {
-                if (role.name === StorytellerRole && role.color === StorytellerRoleColor) {
+                if (role.name === StorytellerRole && role.color === StorytellerRoleColour) {
                     this.storytellerRoleId = role.id;
                     storytellerRoleExists = true;
+                } else if (role.name === SpectatorRole && role.color === SpectatorRoleColour) {
+                    this.spectatorRoleId = role.id;
+                    spectatorRoleExists = true;
                 }
             })
-            return storytellerRoleExists
+            return storytellerRoleExists && spectatorRoleExists
         }
 
         addContextItem(retVal, contextItem, separatorAdded) {
@@ -577,42 +584,70 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        async createGuildStorytellerRole(guild) {
+        async createGuildRoles(guild) {
             // Create Storyteller Role
             const wait = this.getAPICallDelay();
+            const basicPermissions = DiscordModules.DiscordPermissions.VIEW_CHANNEL
             const combinedPermissions = (
+                basicPermissions |
                 DiscordModules.DiscordPermissions.MANAGE_CHANNELS |
-                DiscordModules.DiscordPermissions.VIEW_CHANNEL |
                 DiscordModules.DiscordPermissions.MOVE_MEMBERS |
                 DiscordModules.DiscordPermissions.MUTE_MEMBERS
             );
 
-            const roleData = {
+            const storytellerRoleData = {
                 guildId: guild.id,
                 name: StorytellerRole,
                 permissions: combinedPermissions,
-                color: StorytellerRoleColor,
+                color: StorytellerRoleColour,
+            };
+
+            const spectatorRoleData = {
+                guildId: guild.id,
+                name: SpectatorRole,
+                permissions: basicPermissions,
+                color: SpectatorRoleColour,
             };
 
             // Toasts.info(`Creating Storyteller Role`);
             const newStorytellerRole = await GuildRoleActions.createRole(
-                roleData.guildId,
-                roleData.name,
-                roleData.color
+                storytellerRoleData.guildId,
+                storytellerRoleData.name,
+                storytellerRoleData.color
             ).catch(err => {
                 Toasts.error("Failed to create Storyteller role:", err);
             });
+
             await this.sleep(wait);
             await GuildRoleActions.updateRolePermissions(
-                roleData.guildId,
+                storytellerRoleData.guildId,
                 newStorytellerRole.id,
-                roleData.permissions,
+                storytellerRoleData.permissions,
             ).catch(err => {
                 Toasts.error("Failed to update Storyteller role:", err);
             });
             this.storytellerRoleId = newStorytellerRole.id
 
-            // Find and assign storyteller role to existing bedrooms and clocktower
+            // Toasts.info(`Creating Storyteller Role`);
+            const newSpectorRole = await GuildRoleActions.createRole(
+                spectatorRoleData.guildId,
+                spectatorRoleData.name,
+                spectatorRoleData.color
+            ).catch(err => {
+                Toasts.error("Failed to create Spectator role:", err);
+            });
+            
+            await this.sleep(wait);
+            await GuildRoleActions.updateRolePermissions(
+                spectatorRoleData.guildId,
+                newSpectorRole.id,
+                spectatorRoleData.permissions,
+            ).catch(err => {
+                Toasts.error("Failed to update Spectator role:", err);
+            });
+            this.spectatorRoleId = newSpectorRole.id
+
+            // Find and assign storyteller and spectator role to existing bedrooms and clocktower
             const guildChannels = Object.values(GuildChannelStore.getVocalChannelIds(guild.id));
             let privateChannels = []
             guildChannels.forEach((channelId, _) => {
@@ -632,7 +667,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             );
             for (let i = 0; i < privateChannels.length; i++) {
                 // Add a new permission overwrite for the role
-                const overwrite = {
+                const storytellerOverwrite = {
                     id: newStorytellerRole.id,  // The role ID
                     type: 0,                   // Type 0 means this is for a role, not a user
                     allow: permissions, // Permissions to allow
@@ -640,16 +675,33 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 };
                 // Update the channel with the new overwrites
                 try {
-                    await UpdatePermissionOverwriteActions.updatePermissionOverwrite(privateChannels[i].id, overwrite);
+                    await UpdatePermissionOverwriteActions.updatePermissionOverwrite(privateChannels[i].id, storytellerOverwrite);
                     await this.sleep(wait);
                 } catch (err) {
                     Toasts.error("Failed to update channels with Storyteller role:", err);
                 }
+
+                // Add a new permission overwrite for the role
+                if (privateChannels[i].name !== BedroomName) {
+                    const spectatorOverwrite = {
+                        id: newSpectorRole.id,  // The role ID
+                        type: 0,                   // Type 0 means this is for a role, not a user
+                        allow: permissions, // Permissions to allow
+                        deny: DiscordModules.DiscordPermissions.DENY_PERMISSIONS   // Permissions to deny
+                    };
+                    // Update the channel with the new overwrites
+                    try {
+                        await UpdatePermissionOverwriteActions.updatePermissionOverwrite(privateChannels[i].id, spectatorOverwrite);
+                        await this.sleep(wait);
+                    } catch (err) {
+                        Toasts.error("Failed to update channels with Spectator role:", err);
+                    }
+                }
             }
-            // Toasts.info(`Successfully created Storyteller Role`);
+            Toasts.info(`Successfully created Storyteller and Spectator Roles`);
         }
 
-        generatePermissionOverwrites(guild) {
+        generatePermissionOverwrites(guild, includeSpectator=true) {
             const permissions = (
                 DiscordModules.DiscordPermissions.VIEW_CHANNEL |
                 DiscordModules.DiscordPermissions.CONNECT
@@ -673,6 +725,19 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     id: this.storytellerRoleId,  // The role ID
                     type: 0,                   // Type 0 means this is for a role, not a user
                     allow: storytellerPermissions, // Permissions to allow
+                    deny: DiscordModules.DiscordPermissions.DENY_PERMISSIONS   // Permissions to deny
+                });
+            }
+            if (this.spectatorRoleId !== undefined && includeSpectator) {
+                const spectatorPermissions = (
+                    DiscordModules.DiscordPermissions.VIEW_CHANNEL |
+                    DiscordModules.DiscordPermissions.CONNECT |
+                    DiscordModules.DiscordPermissions.SPEAK
+                );
+                permissionOverwrites.push({
+                    id: this.spectatorRoleId,  // The role ID
+                    type: 0,                   // Type 0 means this is for a role, not a user
+                    allow: spectatorPermissions, // Permissions to allow
                     deny: DiscordModules.DiscordPermissions.DENY_PERMISSIONS   // Permissions to deny
                 });
             }
@@ -704,7 +769,12 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         generateRoomModel(guild, roomInfo, parentId=null) {
-            const permissionOverwrites = roomInfo.permissions ? this.generatePermissionOverwrites(guild) : [];
+            let permissionOverwrites;
+            if (roomInfo.name === BedroomName) {
+                permissionOverwrites = roomInfo.permissions ? this.generatePermissionOverwrites(guild, false) : [];
+            } else {
+                permissionOverwrites = roomInfo.permissions ? this.generatePermissionOverwrites(guild) : [];
+            }
             let newRoom = {
                 guildId: guild.id,
                 name: roomInfo.name,
@@ -852,7 +922,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                         const roles = Object.values(user.roles)
                         let userAdded = false;
                         roles.forEach((roleId, _) => {
-                            if (roleId === this.storytellerRoleId) {
+                            if (roleId === this.storytellerRoleId || roleId === this.spectatorRoleId) {
                                 storytellerUsers.push(user.userId);
                                 userAdded = true;
                             }
