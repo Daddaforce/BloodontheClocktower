@@ -17,10 +17,12 @@ A BetterDiscord plugin designed for the Storyteller of *Blood on the Clocktower*
   - **Move to Great Clocktower** (for night interactions, only available on Bedroom channels)
   - **Mute/Unmute Townsfolk** (server mutes/unmutes all except Storytellers, only available on the Town Square channel)
 - Creates a **Storyteller** role with permissions to manage channels, move users, and access hidden areas.
-- Automatically moves Storytellers to the Great Clocktower during the night phase.
+- Creates a **Spectator** role with permissions to access the great clocktower channel.
+- Automatically moves Storytellers and Spectators to the Great Clocktower during the night phase.
 - Allows for quick user movement:
   - Hold **Shift** or **Control** to select users and drag to highlight them.
   - Right-click any channel and choose **Move X here** to relocate highlighted users instantly.
+  - Right-click any channel and choose **Move X to Bedrooms** to relocated highlights users to bedrooms.
 
 ## Installation
 1. Download the plugin file.
