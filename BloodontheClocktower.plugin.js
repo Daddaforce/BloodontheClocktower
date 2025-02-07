@@ -279,8 +279,10 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         channelMenuPatch(retVal, props) {
-
-            if (props.channel.type !== 2) return;
+            if (
+                props.channel.type !== 2 &&
+                props.channel.name !== PluginInformationChannel
+            ) return;
 
             if (props.guild.id !=  this.guild_id) {
                 this.guild_id = props.guild.id;
@@ -386,6 +388,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             } else if (!storytellerRoleExists) {
                 separatorAdded = this.addContextItem(retVal, createStorytellerAndSpectatorRole, separatorAdded);
             } else {
+                if (props.channel.name === PluginInformationChannel) {
+                    separatorAdded = this.addContextItem(retVal, postReadMe, false);
+                };
                 if (props.channel.name === TownSquareChannelName) {
                     separatorAdded = this.addContextItem(retVal, muteUsers, false);
                     separatorAdded = this.addContextItem(retVal, moveToTownSquare, false);
