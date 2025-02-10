@@ -94,7 +94,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
     const VoiceUserSelector = BdApi.findModuleByProps("voiceUser").voiceUser;
     const VoiceUsersRender = WebpackModules.getByPrototypes("renderPrioritySpeaker");
     const GuildChannelStore = WebpackModules.getByProps("getVocalChannelIds");
-    const SetMemberChannel = BdApi.findModuleByProps("setChannel");
+    const SetMemberChannel = BdApi.Webpack.getModule(m => m.setChannel);
     const CreateChannelActions = BdApi.Webpack.getModule(m => m.createChannel);
     const UpdateChannelActions = BdApi.Webpack.getModule(m => m.updateChannel);
     const UpdatePermissionOverwriteActions = BdApi.Webpack.getModule(m => m.updatePermissionOverwrite);
@@ -153,13 +153,15 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
     )
 
+    const Bedroom = new RoomInfo({name: BedroomName, type: 2, permissions: true})
+
     class BloodontheClocktower extends Plugin {
         cancelled = false;
         guild_id = "";
         selectedUsers = new Set();
-        mouseHeld = false;
-        modifierAddMode = true;
-        mouseStart = {x:0, y:0};
+        // mouseHeld = false;
+        // modifierAddMode = true;
+        // mouseStart = {x:0, y:0};
         storytellerRoleId = undefined;
         spectatorRoleId = undefined;
         voiceChannelCategoryId = undefined;
@@ -181,30 +183,30 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         async onStart() {
             this.triggerREADME();
             this.cancelled = false;
-            PluginUtilities.addStyle(config.info.name, this.css);
+            // PluginUtilities.addStyle(config.info.name, this.css);
             this.PatchAll();
         }
 
-        addDocumentListenerEvent(event, callback) {
-            let unpatch = () => {
-                document.removeEventListener(event, callback);
-            };
-            document.addEventListener(event, callback);
-            return unpatch;
-        }
+        // addDocumentListenerEvent(event, callback) {
+        //     let unpatch = () => {
+        //         document.removeEventListener(event, callback);
+        //     };
+        //     document.addEventListener(event, callback);
+        //     return unpatch;
+        // }
 
         async PatchAll() {
             this.contextMenuPatches.push(BdApi.ContextMenu.patch("channel-context", this.channelMenuPatch.bind(this)));
-            Patcher.after(VoiceUsersRender.prototype, "render", this.voiceUserRenderPatch.bind(this));
-            this.contextMenuPatches.push(this.addDocumentListenerEvent("mousedown", this.onMouseDown.bind(this)));
-            this.contextMenuPatches.push(this.addDocumentListenerEvent("mousemove", this.onMouseMove.bind(this)));
-            this.contextMenuPatches.push(this.addDocumentListenerEvent("mouseup", this.onMouseUp.bind(this)));
+            // Patcher.after(VoiceUsersRender.prototype, "render", this.voiceUserRenderPatch.bind(this));
+            // this.contextMenuPatches.push(this.addDocumentListenerEvent("mousedown", this.onMouseDown.bind(this)));
+            // this.contextMenuPatches.push(this.addDocumentListenerEvent("mousemove", this.onMouseMove.bind(this)));
+            // this.contextMenuPatches.push(this.addDocumentListenerEvent("mouseup", this.onMouseUp.bind(this)));
             return;
         }
 
         onStop() {
             this.cancelled = true;
-            PluginUtilities.removeStyle(config.info.name);
+            // PluginUtilities.removeStyle(config.info.name);
             Patcher.unpatchAll();
 
             for (let unpatch of this.contextMenuPatches) {
@@ -216,67 +218,67 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             }
         }
 
-        onMouseDown(e) {
-            if ((e.button == 0 || e.button == 2) && (e.shiftKey || e.ctrlKey)){
-                this.mouseHeld = true;
-                this.modifierAddMode = e.button == 0;
-                this.mouseStart = {x: e.x, y: e.y};
+        // onMouseDown(e) {
+        //     if ((e.button == 0 || e.button == 2) && (e.shiftKey || e.ctrlKey)){
+        //         this.mouseHeld = true;
+        //         this.modifierAddMode = e.button == 0;
+        //         this.mouseStart = {x: e.x, y: e.y};
 
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                e.preventDefault();
-            }
-        }
+        //         e.stopImmediatePropagation();
+        //         e.stopPropagation();
+        //         e.preventDefault();
+        //     }
+        // }
 
-        onMouseUp(e) {
-            if (this.mouseHeld && (e.button == 0 || e.button == 2)){
-                this.mouseHeld = false;
+        // onMouseUp(e) {
+        //     if (this.mouseHeld && (e.button == 0 || e.button == 2)){
+        //         this.mouseHeld = false;
 
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                e.preventDefault();
+        //         e.stopImmediatePropagation();
+        //         e.stopPropagation();
+        //         e.preventDefault();
 
-                let voiceElements = document.querySelectorAll(".dragSelectedVoiceUser");
+        //         let voiceElements = document.querySelectorAll(".dragSelectedVoiceUser");
 
-                for (const element of voiceElements) {
-                    element.classList.toggle("dragSelectedVoiceUser", false);
+        //         for (const element of voiceElements) {
+        //             element.classList.toggle("dragSelectedVoiceUser", false);
 
-                    let user = ReactTools.getOwnerInstance(element.parentElement).props.user;
-                    if (user && user.id) {
-                        element.classList.toggle("selectedVoiceUser", this.modifierAddMode);
-                        if (this.modifierAddMode) {
-                            this.selectedUsers.add(user.id);
-                        } else {
-                            this.selectedUsers.delete(user.id);
-                        }
-                    }
-                }
-            }
-        }
+        //             let user = ReactTools.getOwnerInstance(element.parentElement).props.user;
+        //             if (user && user.id) {
+        //                 element.classList.toggle("selectedVoiceUser", this.modifierAddMode);
+        //                 if (this.modifierAddMode) {
+        //                     this.selectedUsers.add(user.id);
+        //                 } else {
+        //                     this.selectedUsers.delete(user.id);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        onMouseMove(e) {
-            if (this.mouseHeld && (e.shiftKey || e.ctrlKey)) {
-                let top = Math.min(e.y, this.mouseStart.y);
-                let left = Math.min(e.x, this.mouseStart.x);
-                let right = Math.max(e.x, this.mouseStart.x);
-                let bottom = Math.max(e.y, this.mouseStart.y);
+        // onMouseMove(e) {
+        //     if (this.mouseHeld && (e.shiftKey || e.ctrlKey)) {
+        //         let top = Math.min(e.y, this.mouseStart.y);
+        //         let left = Math.min(e.x, this.mouseStart.x);
+        //         let right = Math.max(e.x, this.mouseStart.x);
+        //         let bottom = Math.max(e.y, this.mouseStart.y);
 
-                let voiceElements = document.querySelectorAll("." + VoiceUserSelector);
+        //         let voiceElements = document.querySelectorAll("." + VoiceUserSelector);
 
-                for (const element of voiceElements) {
-                    let rect = element.getBoundingClientRect();
-                    // check if this rectangle collides with the selection area
-                    let collided = !(rect.left > right || rect.right < left || rect.top > bottom || rect.bottom < top)
-                    element.classList.toggle("dragSelectedVoiceUser", collided);
-                }
+        //         for (const element of voiceElements) {
+        //             let rect = element.getBoundingClientRect();
+        //             // check if this rectangle collides with the selection area
+        //             let collided = !(rect.left > right || rect.right < left || rect.top > bottom || rect.bottom < top)
+        //             element.classList.toggle("dragSelectedVoiceUser", collided);
+        //         }
 
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                e.preventDefault();
-            } else {
-                this.mouseHeld = false;
-            }
-        }
+        //         e.stopImmediatePropagation();
+        //         e.stopPropagation();
+        //         e.preventDefault();
+        //     } else {
+        //         this.mouseHeld = false;
+        //     }
+        // }
 
         channelMenuPatch(retVal, props) {
             if (
@@ -369,13 +371,39 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 })
             });
             
-            const moveToChannel = BdApi.ContextMenu.buildItem({
-                label: `Move ${this.selectedUsers.size} here`,
-                action: () => runOnce("moveToChannel", () => {
-                    this.moveSelectedUsers(props.guild, props.channel.id);
+            // const moveToChannel = BdApi.ContextMenu.buildItem({
+            //     label: `Move ${this.selectedUsers.size} here`,
+            //     action: () => runOnce("moveToChannel", () => {
+            //         this.moveSelectedUsers(props.guild, props.channel.id);
+            //         this.selectedUsers.clear();
+            //     })
+            // });
+
+            // Test moving lots
+            const moveLots = BdApi.ContextMenu.buildItem({
+                label: `Move LOTS`,
+                action: () => runOnce("moveLots", () => {
+                    this.moveEveryoneLots(props.guild, props.channel);
                     this.selectedUsers.clear();
                 })
             });
+
+            const muteLots = BdApi.ContextMenu.buildItem({
+                label: `Mute LOTS`,
+                action: () => runOnce("muteLots", () => {
+                    this.muteEveryoneLots(props.guild, props.channel);
+                    this.selectedUsers.clear();
+                })
+            });
+
+            const createLots = BdApi.ContextMenu.buildItem({
+                label: `Create LOTS`,
+                action: () => runOnce("createLots", () => {
+                    this.createBedroomsLots(props.guild);
+                    this.selectedUsers.clear();
+                })
+            });
+            
 
             let separatorAdded = false
             const storytellerRoleExists = this.checkForStoryTellerAndSpectator(props.guild)
@@ -392,6 +420,11 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     separatorAdded = this.addContextItem(retVal, postReadMe, false);
                 };
                 if (props.channel.name === TownSquareChannelName) {
+                    // Rate Limit Testing
+                    separatorAdded = this.addContextItem(retVal, moveLots, separatorAdded);
+                    separatorAdded = this.addContextItem(retVal, muteLots, separatorAdded);
+                    separatorAdded = this.addContextItem(retVal, createLots, separatorAdded);
+
                     separatorAdded = this.addContextItem(retVal, muteUsers, false);
                     separatorAdded = this.addContextItem(retVal, moveToTownSquare, false);
                 };
@@ -402,9 +435,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 if (props.channel.name === TownSquareChannelName || props.channel.name === ClockTowerChannelName) {
                     separatorAdded = this.addContextItem(retVal, moveToBedrooms, separatorAdded);
                 };
-                if (this.selectedUsers.size > 0) {
-                    this.addContextItem(retVal, moveToChannel, false);
-                };
+                // if (this.selectedUsers.size > 0) {
+                //     this.addContextItem(retVal, moveToChannel, false);
+                // };
             }
             return retVal;
         }
@@ -820,8 +853,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 } catch (error) {
                     if (error.status === 429) {
                         const retryAfter = error.headers?.["retry-after"] || 1; // Default to 1s if not found
-                        Toasts.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
+                        Toasts.info(`Rate limited! Retrying in ${retryAfter} seconds...`);
                         await this.sleep(retryAfter * 1000); // Wait
+                        attempts++;
                     } else {
                         console.log(error);
                         break;
@@ -841,8 +875,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 } catch (error) {
                     if (error.status === 429) {
                         const retryAfter = error.headers?.["retry-after"] || 1; // Default to 1s if not found
-                        Toasts.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
+                        Toasts.info(`Rate limited! Retrying in ${retryAfter} seconds...`);
                         await this.sleep(retryAfter * 1000); // Wait
+                        attempts++;
                     } else {
                         console.log(error);
                         break;
@@ -855,17 +890,36 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             const wait = this.getAPICallDelay();
             let attempts = 0;
             while (attempts < this.maxRetries) {
+                // Create a Promise that waits for the XHR response
+                const apiCallPromise = new Promise((resolve, reject) => {
+                    const originalSend = XMLHttpRequest.prototype.send;
+                    XMLHttpRequest.prototype.send = function (...args) {
+                        this.addEventListener("load", function () {
+                            if (this.status === 429) {
+                                // Extract the 'Retry-After' header if available
+                                const retryAfter = parseInt(this.getResponseHeader("Retry-After")) || 1;
+                                reject({ status: this.status, retryAfter }); // Reject to trigger retry logic
+                            } else {
+                                resolve(); // Resolve if no rate limit error
+                            }
+                        });
+
+                        return originalSend.apply(this, args);
+                    };
+                });
                 try {
                     await SetMemberChannel.setChannel(guildId, userId, roomId);
+                    await apiCallPromise; // Wait for XHR response before proceeding
                     await this.sleep(wait);
                     break;
                 } catch (error) {
                     if (error.status === 429) {
-                        const retryAfter = error.headers?.["retry-after"] || 1; // Default to 1s if not found
-                        Toasts.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
-                        await this.sleep(retryAfter * 1000); // Wait
+                        Toasts.info(`Rate limited! Retrying in ${error.retryAfter} seconds...`);
+                        console.log(`Rate limited! Retrying in ${error.retryAfter} seconds...`);
+                        await this.sleep(error.retryAfter * 1000); // Wait for the Retry-After delay
+                        attempts++;
                     } else {
-                        console.log(error);
+                        console.error("Unexpected Error:", error);
                         break;
                     }
                 }
@@ -885,8 +939,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 } catch (error) {
                     if (error.status === 429) {
                         const retryAfter = error.headers?.["retry-after"] || 1; // Default to 1s if not found
-                        Toasts.warn(`Rate limited! Retrying in ${retryAfter} seconds...`);
+                        Toasts.info(`Rate limited! Retrying in ${retryAfter} seconds...`);
                         await this.sleep(retryAfter * 1000); // Wait
+                        attempts++;
                     } else {
                         console.log(error);
                         break;
@@ -897,7 +952,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         async moveSelectedUsers(guild, channelId) {
-            const wait = this.getAPICallDelay();
             let users = Array.from(this.selectedUsers);
             Toasts.info('Moving ' + users.length + " users");
             for (let i = 0; i < users.length; i++) {
@@ -907,7 +961,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         async moveUsersToBedrooms(guild, channel) {
-            const wait = this.getAPICallDelay();
             let unknownUserIds = []
             if (this.selectedUsers.size === 0) {
                 const voices = this.getVoices(guild)
@@ -988,8 +1041,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             if (users.length > nonOccupiedBedroomIds.length && canCreateChannels) {
                 Toasts.info("Not enough bedrooms, making new bedrooms");
                 const missingBedroomCount = users.length - nonOccupiedBedroomIds.length;
-                let roomInfo = new RoomInfo({name: BedroomName, type: 2, permissions: true})
-                newBedroomIds = await this.createRooms({guild: guild, roomInfo: roomInfo, parentId: voiceChannelCategoryId, roomsToCreate: missingBedroomCount});
+                newBedroomIds = await this.createRooms({guild: guild, roomInfo: Bedroom, parentId: voiceChannelCategoryId, roomsToCreate: missingBedroomCount});
             }
 
             let availableBedroomIds = [...nonOccupiedBedroomIds, ...newBedroomIds];
@@ -1018,7 +1070,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
     
         async moveUsersToTownSquare(guild) {
-            const wait = this.getAPICallDelay();
             const voices = this.getVoices(guild)
             if (voices.length === 0) return;
             let townSquare = undefined
@@ -1064,7 +1115,6 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
         }
 
         async moveToClockTower(guild, channel) {
-            const wait = this.getAPICallDelay();
             const voices = this.getVoices(guild, channel)
             if (voices.length === 0) return;
             let users = []
@@ -1087,39 +1137,86 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             // Toasts.info("Moving to Clocktower complete!");
         }
 
-        voiceUserRenderPatch(org, args, resp) {
-            let oldfunc = resp.props.onClick;
-            resp.props.onClick = (e) => {
-                if (e.ctrlKey || e.shiftKey) {
-                    if (org.props.guildId != this.guild_id) {
-                        this.guild_id = org.props.guildId;
-                        this.selectedUsers.clear();
-                    }
+        async moveEveryoneLots(guild, channel) {
+            let totalMoves = 20;
+            const voices = this.getVoices(guild, channel)
+            if (voices.length === 0) return;
+            let users = []
+            voices.forEach((voice, _) => { users.push(voice.user)})
 
-                    if (this.selectedUsers.has(org.props.user.id)) {
-                        this.selectedUsers.delete(org.props.user.id);
-                    } else {
-                        this.selectedUsers.add(org.props.user.id);
-                    }
-
-                    let current = e.target;
-                    while (current != undefined && current.classList) {
-                        if (current.classList.contains(VoiceUserSelector)) {
-                            current.classList.toggle('selectedVoiceUser', this.selectedUsers.has(org.props.user.id))
-                            break;
-                        }
-                        current = current.parentNode;
-                    }
-                } else {
-                    oldfunc(e);
+            let clockTower = undefined;
+            let townSquare = undefined;
+            const guildChannels = Object.values(GuildChannelStore.getVocalChannelIds(guild.id));
+            guildChannels.forEach((channelId, _) => {
+                let channel = DiscordModules.ChannelStore.getChannel(channelId);
+                if (channel.name === ClockTowerChannelName) {
+                    clockTower = channel;
+                } else if (channel.name === TownSquareChannelName) {
+                    townSquare = channel;
                 }
-            };
+            })
 
-            resp.props.onClick = resp.props.onClick.bind(this);
-            if (this.selectedUsers.has(org.props.user.id)) {
-                resp.props.className += " selectedVoiceUser";
+            for (let i = 0; i < totalMoves; i++) {
+                await this.moveUsersPost(guild.id, users[0].id, clockTower.id);
+                await this.moveUsersPost(guild.id, users[0].id, townSquare.id);
             }
+            return;
         }
+
+        async muteEveryoneLots(guild, channel) {
+            let totalMutes = 20;
+            const voices = this.getVoices(guild, channel)
+            if (voices.length === 0) return;
+            let users = []
+            voices.forEach((voice, _) => { users.push(voice.user)})
+            let muted = false;
+            for (let i = 0; i < totalMutes; i++) {
+                await this.muteUsersPost(guild.id, users[0].id, !muted);
+                muted = !muted
+            }
+            return;
+        }
+
+        async createBedroomsLots(guild) {
+            let totalBedrooms = 20;
+            const newRoom = this.generateRoomModel(guild, Bedroom);
+            newRoomIds = await this.createChannels(newRoom, totalBedrooms);
+            return;
+        }
+
+        // voiceUserRenderPatch(org, args, resp) {
+        //     let oldfunc = resp.props.onClick;
+        //     resp.props.onClick = (e) => {
+        //         if (e.ctrlKey || e.shiftKey) {
+        //             if (org.props.guildId != this.guild_id) {
+        //                 this.guild_id = org.props.guildId;
+        //                 this.selectedUsers.clear();
+        //             }
+
+        //             if (this.selectedUsers.has(org.props.user.id)) {
+        //                 this.selectedUsers.delete(org.props.user.id);
+        //             } else {
+        //                 this.selectedUsers.add(org.props.user.id);
+        //             }
+
+        //             let current = e.target;
+        //             while (current != undefined && current.classList) {
+        //                 if (current.classList.contains(VoiceUserSelector)) {
+        //                     current.classList.toggle('selectedVoiceUser', this.selectedUsers.has(org.props.user.id))
+        //                     break;
+        //                 }
+        //                 current = current.parentNode;
+        //             }
+        //         } else {
+        //             oldfunc(e);
+        //         }
+        //     };
+
+        //     resp.props.onClick = resp.props.onClick.bind(this);
+        //     if (this.selectedUsers.has(org.props.user.id)) {
+        //         resp.props.className += " selectedVoiceUser";
+        //     }
+        // }
 
         canMoveInChannel(channelId) {
             let channel = DiscordModules.ChannelStore.getChannel(channelId);
