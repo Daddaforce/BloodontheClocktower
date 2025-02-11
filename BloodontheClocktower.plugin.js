@@ -424,7 +424,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                     separatorAdded = this.addContextItem(retVal, moveLots, separatorAdded);
                     separatorAdded = this.addContextItem(retVal, muteLots, separatorAdded);
                     separatorAdded = this.addContextItem(retVal, createLots, separatorAdded);
-
+                    
                     separatorAdded = this.addContextItem(retVal, muteUsers, false);
                     separatorAdded = this.addContextItem(retVal, moveToTownSquare, false);
                 };
@@ -1047,19 +1047,19 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             let availableBedroomIds = [...nonOccupiedBedroomIds, ...newBedroomIds];
 
             if (users.length <= availableBedroomIds.length) {
-                if (users.length !== 0) {
-                    Toasts.info('Moving ' + users.length + " users to bedrooms.");
-                    for (let i = 0; i < users.length; i++) {
-                        await this.moveUsersPost(guild.id, users[i], availableBedroomIds[i]);
-                    }
-                    // Toasts.info("Moving to bedrooms complete!");
-                }
                 if (storytellerUsers.length !== 0) {
                     Toasts.info('Moving ' + storytellerUsers.length + " users to Clocktower.");
                     for (let i = 0; i < storytellerUsers.length; i++) {
                         await this.moveUsersPost(guild.id, storytellerUsers[i], clocktowerId);
                     }
                     // Toasts.info("Moving to Clocktower complete!");
+                }
+                if (users.length !== 0) {
+                    Toasts.info('Moving ' + users.length + " users to bedrooms.");
+                    for (let i = 0; i < users.length; i++) {
+                        await this.moveUsersPost(guild.id, users[i], availableBedroomIds[i]);
+                    }
+                    // Toasts.info("Moving to bedrooms complete!");
                 }
                 if (users.length === 0 && storytellerUsers.length === 0) {
                     Toasts.info("Everyone has already been moved");
