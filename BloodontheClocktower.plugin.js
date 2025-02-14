@@ -380,29 +380,29 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
             // });
 
             // Test moving lots
-            const moveLots = BdApi.ContextMenu.buildItem({
-                label: `Move LOTS`,
-                action: () => runOnce("moveLots", () => {
-                    this.moveEveryoneLots(props.guild, props.channel);
-                    this.selectedUsers.clear();
-                })
-            });
+            // const moveLots = BdApi.ContextMenu.buildItem({
+            //     label: `Move LOTS`,
+            //     action: () => runOnce("moveLots", () => {
+            //         this.moveEveryoneLots(props.guild, props.channel);
+            //         this.selectedUsers.clear();
+            //     })
+            // });
 
-            const muteLots = BdApi.ContextMenu.buildItem({
-                label: `Mute LOTS`,
-                action: () => runOnce("muteLots", () => {
-                    this.muteEveryoneLots(props.guild, props.channel);
-                    this.selectedUsers.clear();
-                })
-            });
+            // const muteLots = BdApi.ContextMenu.buildItem({
+            //     label: `Mute LOTS`,
+            //     action: () => runOnce("muteLots", () => {
+            //         this.muteEveryoneLots(props.guild, props.channel);
+            //         this.selectedUsers.clear();
+            //     })
+            // });
 
-            const createLots = BdApi.ContextMenu.buildItem({
-                label: `Create LOTS`,
-                action: () => runOnce("createLots", () => {
-                    this.createBedroomsLots(props.guild);
-                    this.selectedUsers.clear();
-                })
-            });
+            // const createLots = BdApi.ContextMenu.buildItem({
+            //     label: `Create LOTS`,
+            //     action: () => runOnce("createLots", () => {
+            //         this.createBedroomsLots(props.guild);
+            //         this.selectedUsers.clear();
+            //     })
+            // });
             
 
             let separatorAdded = false
@@ -421,9 +421,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
                 };
                 if (props.channel.name === TownSquareChannelName) {
                     // Rate Limit Testing
-                    separatorAdded = this.addContextItem(retVal, moveLots, separatorAdded);
-                    separatorAdded = this.addContextItem(retVal, muteLots, separatorAdded);
-                    separatorAdded = this.addContextItem(retVal, createLots, separatorAdded);
+                    // separatorAdded = this.addContextItem(retVal, moveLots, separatorAdded);
+                    // separatorAdded = this.addContextItem(retVal, muteLots, separatorAdded);
+                    // separatorAdded = this.addContextItem(retVal, createLots, separatorAdded);
                     
                     separatorAdded = this.addContextItem(retVal, muteUsers, false);
                     separatorAdded = this.addContextItem(retVal, moveToTownSquare, false);
